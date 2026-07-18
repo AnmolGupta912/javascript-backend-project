@@ -4,10 +4,17 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon src/index.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "Anmol gupta",
   "license": "ISC",
-  "type": "commonjs"
+  "type": "module",
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2"
+  }
 }
