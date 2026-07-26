@@ -1,6 +1,11 @@
 import mongoose from "mongoose";
 import { DB_NAME } from "../constands.js";
 
+// to solve this error MONGODB connection FAILED: Error: querySrv ECONNREFUSE
+// i have added this and its works
+import dns from "node:dns/promises";   
+dns.setServers(["1.1.1.1", "1.0.0.1"]);   
+
 
 const connectDB = async () => {
     try {

@@ -15,6 +15,11 @@ app.use(express.urlencoded({extended: true, limit: "16kb"})) // parser data from
 app.use(express.static("public")) // read and write static file
 app.use(cookieParser()) // acess user's server cookies and proform CURD operations
 
+// routes import 
+import userRouter from "./routes/user.routes.js"
 
+
+// routes decleration
+app.use("/api/v1/user", userRouter)
 
 export { app , port }
