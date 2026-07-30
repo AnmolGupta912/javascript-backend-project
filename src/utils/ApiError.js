@@ -9,7 +9,7 @@ class ApiError extends Error{
         errors = [],
         stack = ""
     ){
-        super(messages)
+        super(message)
         this.message = message
         console.log("ApiError data: ",this.data)
         this.data = null

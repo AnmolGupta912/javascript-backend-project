@@ -3,7 +3,7 @@ import connectDB from "./db/index.js";
 import { app, port } from "./app.js";
 
 
-dotenv.config({path: "./env"})  // this is imp without this env will not load
+dotenv.config({path: "./.env"})  // this is imp without this env will not load
 
 
 connectDB()  // when db is connected it return a promiss
