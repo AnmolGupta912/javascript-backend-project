@@ -64,11 +64,13 @@ userSchema.pre("save", async function (next) {
 })
 
 
+
+// these is only avail on user created by expotred User model 
+
 // this is the custom method to check is the password is correct 
 userSchema.methods.isPasswordCorrect = async function (password) {
     return await bcrypt.compare(password, this.password)
 }
-
 
 // this method jwt.sign is use to make the token 
 userSchema.methods.generateAccessToken = function () {
@@ -88,7 +90,7 @@ userSchema.methods.generateAccessToken = function () {
 
 
 
-userSchema.methods.generateAccessToken = function () {
+userSchema.methods.generateRefreshToken = function () {
     return jwt.sign(
         {
             _id: this._id

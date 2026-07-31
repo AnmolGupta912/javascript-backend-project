@@ -3,8 +3,26 @@ import { ApiError } from "../utils/ApiError.js"
 import { User } from "../models/user.model.js"
 import { uploadFileOnCloudinary } from "../utils/cloudinary.js"
 import { ApiRespone } from '../utils/ApiRespone.js'
+import { Router } from "express"
 
 
+const generateAccessTokenAndRefreshToken = async (userId) => {
+    try {
+        const user = await User.findById(userId)
+        const accessToken = user.generateAccessToken()
+        const refreshToken = user.generateRefreshToken()
+        user.refershToken = refreshToken
+
+        user.save({ validateBeforeSave: false }) // by doing validation false we r tell mongoDB to ignore its custom validation like check requied field
+        return { accessToken, refreshToken }
+
+    } catch (error) {
+        throw new ApiError(500, "Something went wrong while generating the tokens!!!")
+    }
+}
+
+
+// register user route 
 const registerUser = asyncHandler( async (req, res) => {
     // get user details from frontend
     // validation - not empty
@@ -42,7 +60,7 @@ const registerUser = asyncHandler( async (req, res) => {
 
     // req.files it is extra methods provided by multer
     const avatarLocalPath = req.files?.avatar[0]?.path
-    console.log(avatarLocalPath);
+    console.log(avatarLocalPath );
     
     // const coverImageLocalPath = req.files?.coverImage[0]?.path this is not required field so it can be undefined and unable to store in db
     let coverImageLocalPath;
@@ -92,6 +110,90 @@ const registerUser = asyncHandler( async (req, res) => {
     )
 })
 
+// loginUser Route
+const loginUser = asyncHandler( async (req, res) => {
+    // req.body <= data
+    // username || email
+    // find user
+    // password valid
+    // generate & send token
+    // send cookies
+
+    const { username, email, password } = req.body
+
+    if (!username || !email ) {
+        throw new ApiError(401, "username or email are required!!!")
+    }
+    
+    const user = await User.findOne({
+        $or: [{username}, {email}]
+    })
+
+    if (!user) {
+        throw new ApiError(404, "user not found!!!")
+    }
+
+    const isPassowrdValid = await user.isPasswordCorrect(password)
+
+    if (!isPassowrdValid) {
+        throw new ApiError(401, "Invalid user credentials");
+    }
+
+    const {accessToken, refreshToken} = await generateAccessTokenAndRefreshToken(user._id)
+
+    const loggedInUser = User.findById(user._id).select("-password -refreshToken")
+    
+    // now client cant mody thier cookies
+    const options = {
+        httpOnly: true,
+        secure: true
+    }
+
+    return res.status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
+        new ApiRespone(
+            200,
+            {
+                user: loggedInUser, accessToken, refreshToken
+            },
+            "User loggedIn successfully"
+        )
+    )
+    
+
+})
+
+// logout route 
+const logoutUser = asyncHandler( async( req, res) => {
+    await User.findByIdAndDelete(
+        req.user?._id,
+        {
+            $unset: {
+                refershToken: 1
+            }
+        },
+        {
+            new: true
+        }
+    )
+
+    const options = {
+        httpOnly: true,
+        secure: true
+    }
+
+    return res
+    .status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json(200, {}, "User loggedout successfully!!!")
+})
+
 export {
-    registerUser
+    registerUser, 
+    loginUser ,
+    logoutUser
+    
 }
