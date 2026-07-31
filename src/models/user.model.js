@@ -43,7 +43,7 @@ const userSchema = new Schema(
         coverImage: {
             type: String, // cloudinary url
         },
-        refershToken: {
+        refreshToken: {
             type: String
         }
     },
@@ -57,7 +57,9 @@ const userSchema = new Schema(
 // we do not use the arrow function here bcuz u cant acess the password then 
 // .pre is the method that excute one after another  its a middleware
 userSchema.pre("save", async function (next) {
-    if (!this.isModified("password")) return next()
+    if (!this.isModified("password")) {
+        return //next()
+    }
 
     this.password = await bcrypt.hash(this.password, 10)
     // next() ?? this give me a type err : next is not a func

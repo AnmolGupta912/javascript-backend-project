@@ -4,16 +4,16 @@ import { User } from "../models/user.model.js"
 import { uploadFileOnCloudinary } from "../utils/cloudinary.js"
 import { ApiRespone } from '../utils/ApiRespone.js'
 import { Router } from "express"
-
+import jwt from "jsonwebtoken"
 
 const generateAccessTokenAndRefreshToken = async (userId) => {
     try {
         const user = await User.findById(userId)
         const accessToken = user.generateAccessToken()
         const refreshToken = user.generateRefreshToken()
-        user.refershToken = refreshToken
+        user.refreshToken = refreshToken
 
-        user.save({ validateBeforeSave: false }) // by doing validation false we r tell mongoDB to ignore its custom validation like check requied field
+        await user.save({ validateBeforeSave: false }) // by doing validation false we r tell mongoDB to ignore its custom validation like check requied field
         return { accessToken, refreshToken }
 
     } catch (error) {
@@ -121,7 +121,7 @@ const loginUser = asyncHandler( async (req, res) => {
 
     const { username, email, password } = req.body
 
-    if (!username || !email ) {
+    if (!(username || email)) {
         throw new ApiError(401, "username or email are required!!!")
     }
     
@@ -140,27 +140,34 @@ const loginUser = asyncHandler( async (req, res) => {
     }
 
     const {accessToken, refreshToken} = await generateAccessTokenAndRefreshToken(user._id)
+    // console.log(accessToken,refreshToken);
+    
 
-    const loggedInUser = User.findById(user._id).select("-password -refreshToken")
+    const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
+    console.log(loggedInUser);
+    
     
     // now client cant mody thier cookies
+
     const options = {
         httpOnly: true,
         secure: true
     }
 
-    return res.status(200)
+    return res
+    .status(200)
     .cookie("accessToken", accessToken, options)
     .cookie("refreshToken", refreshToken, options)
     .json(
         new ApiRespone(
-            200,
+            200, 
             {
                 user: loggedInUser, accessToken, refreshToken
             },
-            "User loggedIn successfully"
+            "User logged In Successfully"
         )
     )
+
     
 
 })
@@ -188,12 +195,54 @@ const logoutUser = asyncHandler( async( req, res) => {
     .status(200)
     .clearCookie("accessToken", options)
     .clearCookie("refreshToken", options)
-    .json(200, {}, "User loggedout successfully!!!")
+    .json(new ApiRespone(200, {}, "User loggedout successfully!!!"))
 })
+
+const refreshAccessToken = asyncHandler( async(req, res) => {
+    const incomingRefreshToken = req.cookies?.refershToken || req.body.refershToken
+
+    if (!incomingRefreshToken) {
+        throw new ApiError(401, "Unauthorized request!!!")
+    }
+
+    try {
+        const decodedToken = jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET)
+         
+        const user = await User.findById(decodedToken?._id)
+    
+        if (!user) {
+            throw new ApiError(401, "Invalid refresh token!!!")
+        }
+    
+        if (incomingRefreshToken !== user.refreshToken){
+            throw new ApiError(401, "Invalid refresh token!!!")
+        }
+    
+        const {accessToken, newRefreshToken} = await generateAccessTokenAndRefreshToken(user._id)
+    
+        const options = {
+            httpOnly: true,
+            secure: true
+        }
+    
+        return res
+        .status(200)
+        .cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", refreshToken, options)
+        .json( new ApiRespone(200, {
+            accessToken, refreshToken: newRefreshToken
+        }, "Access token refreshed!!!"))
+
+    } catch (error) {
+        throw new ApiError(400, error?.message || "Invalid refresh token!!!")
+    }
+
+}) 
+
 
 export {
     registerUser, 
     loginUser ,
-    logoutUser
-    
+    logoutUser,
+    refreshAccessToken
 }
