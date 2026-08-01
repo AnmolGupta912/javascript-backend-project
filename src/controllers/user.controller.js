@@ -5,6 +5,7 @@ import { uploadFileOnCloudinary } from "../utils/cloudinary.js"
 import { ApiRespone } from '../utils/ApiRespone.js'
 import { Router } from "express"
 import jwt from "jsonwebtoken"
+import { use } from "react"
 
 const generateAccessTokenAndRefreshToken = async (userId) => {
     try {
@@ -199,8 +200,8 @@ const logoutUser = asyncHandler( async( req, res) => {
 })
 
 const refreshAccessToken = asyncHandler( async(req, res) => {
-    const incomingRefreshToken = req.cookies?.refershToken || req.body.refershToken
-
+    const incomingRefreshToken = req.cookies?.refreshToken || req.body.refreshToken
+    // console.log(incomingRefreshToken)
     if (!incomingRefreshToken) {
         throw new ApiError(401, "Unauthorized request!!!")
     }
@@ -211,24 +212,28 @@ const refreshAccessToken = asyncHandler( async(req, res) => {
         const user = await User.findById(decodedToken?._id)
     
         if (!user) {
-            throw new ApiError(401, "Invalid refresh token!!!")
+            throw new ApiError(401, "Invalid refresh token for user !!!")
         }
     
+        console.log(user.refreshToken)
+        console.log(incomingRefreshToken)
         if (incomingRefreshToken !== user.refreshToken){
             throw new ApiError(401, "Invalid refresh token!!!")
         }
     
         const {accessToken, newRefreshToken} = await generateAccessTokenAndRefreshToken(user._id)
     
+        // console.log(accessToken, refreshToken)
         const options = {
             httpOnly: true,
             secure: true
         }
+
     
         return res
         .status(200)
         .cookie("accessToken", accessToken, options)
-        .cookie("refreshToken", refreshToken, options)
+        .cookie("refreshToken", newRefreshToken, options)
         .json( new ApiRespone(200, {
             accessToken, refreshToken: newRefreshToken
         }, "Access token refreshed!!!"))
@@ -239,10 +244,154 @@ const refreshAccessToken = asyncHandler( async(req, res) => {
 
 }) 
 
+// change current password route
+const changeCurrentPassword = asyncHandler( async(req, res) => {
+    const { oldPassword, newPassword } = req.body
+
+    const user = await User.findById(req.user?._id)
+
+    const isPasswordCorrect = user.isPasswordCorrect(oldPassword)
+
+    if (!isPasswordCorrect) {
+        throw new ApiError(401, "Invalid Password!!!")
+    }
+    
+    user.password = newPassword
+    await user.save({validateBeforeSave: true})
+
+    return res
+    .status(200)
+    .json(new ApiRespone(200, {}, "Password change successfully!!!"))
+})
+
+// get current user route
+const getCurrentUser = asyncHandler( async(req, res) => {
+    try {
+        return res
+        .status(200)
+        .json(new ApiRespone(
+            200,
+            {
+                ...req.user
+            },
+            "!!!"
+        ))
+
+        // const user = await User.findById(req.user?._id)
+        // return res
+        // .status(200)
+        // .json(new ApiRespone(
+        //     200,
+        //     req.user,
+        //     "current user fetched successfully!!!"
+        // ))
+
+    } catch (error) {
+        throw new ApiError(400, error.message || "Can't get the current user!!!")
+    }
+})
+
+// updateAccountDetail route
+const updateAccountDetail = asyncHandler( async( req, res ) => {
+    // get/check {fullName, email} to be change from req.body
+    // findAndUpdate user from DB  
+    // return the res
+
+    const { fullName, email } = req.body
+
+    if (!(fullName && email)) {
+        throw new ApiError(200 , "All field are requied!!!")
+    }
+
+    const user =  await User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            fullName,
+            email
+        },
+        {new: true}
+    ).select("-password")
+
+    return res
+    .status(200)
+    .json(new ApiRespone(200, user, "Account details updated successfully!!!"))
+
+})
+
+// updateUserAvatar route
+const updateUserAvatar = asyncHandler(async(req, res) => {
+    // by multer we storge avatar file to local storage   
+    // store the file to cloudinary (if can, delete the old file from cloudinary)
+    // get the cloud url of upload
+    // findAndUpdate user 
+
+    const avatarLocalPath = req.file
+
+    if (!avatarLocalPath) {
+        throw new ApiError(400, "Avatar is missing!!!")
+    }
+    
+    const avatar = await uploadFileOnCloudinary(avatarLocalPath)
+    
+    if (!avatar.url) {
+        throw new ApiError(500, "Something went wrong while uploading file on cloudinary!!!")
+    }
+
+    const user = await User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            avatar: avatar.url
+        },
+        {new: true}
+    ).select("-password")
+
+    return res
+    .status(200)
+    .json(new ApiRespone(200, {user}, "Avatar updated successfully!!!"))
+
+})
+
+// updateUserCoverImage route
+const updateUserCoverImage = asyncHandler(async(req, res) => {
+    // by multer we storge avatar file to local storage   
+    // store the file to cloudinary (if can, delete the old file from cloudinary)
+    // get the cloud url of upload
+    // findAndUpdate user 
+
+    const coverImageLocalPath = req.file
+
+    if (!coverImageLocalPath) {
+        throw new ApiError(400, "coverImage is missing!!!")
+    }
+    
+    const coverImage = await uploadFileOnCloudinary(coverImageLocalPath)
+    
+    if (!coverImage.url) {
+        throw new ApiError(500, "Something went wrong while uploading file on cloudinary!!!")
+    }
+
+    const user = await User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            coverImage: coverImage.url
+        },
+        {new: true}
+    ).select("-password")
+
+    return res
+    .status(200)
+    .json(new ApiRespone(200, {user}, "coverImage updated successfully!!!"))
+
+})
 
 export {
     registerUser, 
     loginUser ,
     logoutUser,
-    refreshAccessToken
+    refreshAccessToken,
+    changeCurrentPassword,
+    getCurrentUser,
+    updateAccountDetail,
+    updateUserAvatar,
+    updateUserCoverImage
 }
