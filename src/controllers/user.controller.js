@@ -184,7 +184,7 @@ const logoutUser = asyncHandler( async( req, res) => {
             }
         },
         {
-            new: true
+            returnDocument:  "after"
         }
     )
 
@@ -328,12 +328,15 @@ const updateUserAvatar = asyncHandler(async(req, res) => {
 
     const avatarLocalPath = req.file
 
+    // console.log(avatarLocalPath)
     if (!avatarLocalPath) {
         throw new ApiError(400, "Avatar is missing!!!")
     }
+    console.log(typeof avatarLocalPath)
+    console.log( avatarLocalPath)
+    const avatar = await uploadFileOnCloudinary(avatarLocalPath?.path)
     
-    const avatar = await uploadFileOnCloudinary(avatarLocalPath)
-    
+    console.log(avatar?.url)
     if (!avatar.url) {
         throw new ApiError(500, "Something went wrong while uploading file on cloudinary!!!")
     }
