@@ -332,8 +332,7 @@ const updateUserAvatar = asyncHandler(async(req, res) => {
     if (!avatarLocalPath) {
         throw new ApiError(400, "Avatar is missing!!!")
     }
-    console.log(typeof avatarLocalPath)
-    console.log( avatarLocalPath)
+
     const avatar = await uploadFileOnCloudinary(avatarLocalPath?.path)
     
     console.log(avatar?.url)
@@ -368,7 +367,7 @@ const updateUserCoverImage = asyncHandler(async(req, res) => {
         throw new ApiError(400, "coverImage is missing!!!")
     }
     
-    const coverImage = await uploadFileOnCloudinary(coverImageLocalPath)
+    const coverImage = await uploadFileOnCloudinary(coverImageLocalPath.path)
     
     if (!coverImage.url) {
         throw new ApiError(500, "Something went wrong while uploading file on cloudinary!!!")
@@ -388,6 +387,7 @@ const updateUserCoverImage = asyncHandler(async(req, res) => {
 
 })
 
+// /c/:username route
 const getUserChannelProfile = asyncHandler(async(req, res) => {
 
 
@@ -469,8 +469,12 @@ const getUserChannelProfile = asyncHandler(async(req, res) => {
 
 })
 
+// /watch-history route
 const getWatchHistory = asyncHandler( async(req, res) => {
-    const user = User.aggregate([
+    // console.log(new mongoose.Types.ObjectId(req.user._id));
+    
+
+    const user = await User.aggregate([
         {
             $match: {
                 _id: new mongoose.Types.ObjectId(req.user._id)
@@ -512,6 +516,8 @@ const getWatchHistory = asyncHandler( async(req, res) => {
         }
     ])
 
+    console.log(user[0]);
+    
     return res
     .status(200)
     .json( 
