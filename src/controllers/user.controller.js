@@ -38,9 +38,7 @@ const registerUser = asyncHandler( async (req, res) => {
 
     // req.body is for form/direct json data
     const {fullName, email, username, password} = req.body
-    console.log("Email:", email);
     
-
     // here we can also do it one by one checking
     if (
         [fullName, email, username, password].some((field) => field?.trim() === "")
@@ -61,7 +59,7 @@ const registerUser = asyncHandler( async (req, res) => {
 
     // req.files it is extra methods provided by multer
     const avatarLocalPath = req.files?.avatar[0]?.path
-    console.log(avatarLocalPath );
+
     
     // const coverImageLocalPath = req.files?.coverImage[0]?.path this is not required field so it can be undefined and unable to store in db
     let coverImageLocalPath;
@@ -100,8 +98,10 @@ const registerUser = asyncHandler( async (req, res) => {
     const createdUser = await User.findById(user._id).select(
         "-password -refershToken"
     )
-    console.log(createdUser)
 
+    
+    console.log("this is for the created user")
+    console.log(createdUser)
     if (!createdUser) {
         throw new ApiError(500, "Something went wrong while registering the user!!!")
     }
@@ -142,7 +142,6 @@ const loginUser = asyncHandler( async (req, res) => {
     }
 
     const {accessToken, refreshToken} = await generateAccessTokenAndRefreshToken(user._id)
-    // console.log(accessToken,refreshToken);
     
 
     const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
@@ -224,7 +223,6 @@ const refreshAccessToken = asyncHandler( async(req, res) => {
     
         const {accessToken, newRefreshToken} = await generateAccessTokenAndRefreshToken(user._id)
     
-        // console.log(accessToken, refreshToken)
         const options = {
             httpOnly: true,
             secure: true
@@ -273,19 +271,10 @@ const getCurrentUser = asyncHandler( async(req, res) => {
         .json(new ApiRespone(
             200,
             {
-                ...req.user
+                user: req.user
             },
             "!!!"
         ))
-
-        // const user = await User.findById(req.user?._id)
-        // return res
-        // .status(200)
-        // .json(new ApiRespone(
-        //     200,
-        //     req.user,
-        //     "current user fetched successfully!!!"
-        // ))
 
     } catch (error) {
         throw new ApiError(400, error.message || "Can't get the current user!!!")
@@ -328,7 +317,6 @@ const updateUserAvatar = asyncHandler(async(req, res) => {
 
     const avatarLocalPath = req.file
 
-    // console.log(avatarLocalPath)
     if (!avatarLocalPath) {
         throw new ApiError(400, "Avatar is missing!!!")
     }
@@ -390,9 +378,9 @@ const updateUserCoverImage = asyncHandler(async(req, res) => {
 // /c/:username route
 const getUserChannelProfile = asyncHandler(async(req, res) => {
 
-
     const {username} = req.params // this means that username comeing from url
 
+    console.log(username)
     if (!username.trim()) {
         throw new ApiError(400, "username is missing!!!")
     }
@@ -426,14 +414,14 @@ const getUserChannelProfile = asyncHandler(async(req, res) => {
         {
             $addFields:{
                 subscribersCount: {
-                    $size: "$subcribers"
+                    $size: { $ifNull: [  "$subcribers", [] ] }
                 },
                 channelsSubscriberToCount: {
-                    $size: "$subscribedTo"
+                    $size:  { $ifNull: [  "$subscribedTo", [] ] }
                 },
                 isSubscribed:{
                     $cond: {
-                        if : {$in: [req.user?._id, "$subscribers.subscriber"]},
+                        if : {$in: [req.user?._id, { $ifNull: [ "$subscribers.subscriber", [] ] }]},// the array can be null so there should be a empty []
                         then: true,
                         else: false
                     }
