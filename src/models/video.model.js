@@ -5,7 +5,7 @@ const videoSchema = new Schema(
     {
         videoFile: {
             type: String,
-            required: true,
+            required: true, 
         },
         thumbnail: {
             type: String,
@@ -35,7 +35,6 @@ const videoSchema = new Schema(
             type: Boolean,
             default: true
         }      
-
     },
     {
         timestamps: true

@@ -13,13 +13,8 @@ const publishAVideo = asyncHandler(async(req , res) => {
     // get url of files from cloudianry and store it on db
     // sent res
 
-    console.log("NORMAL LOG");
-    console.error("ERROR LOG");
-    process.stdout.write("STDOUT LOG\n");
-
     try {
         const {title, description} = req.body
-        // console.log(title, description)
     
         if (!(title && description)) {
             throw new ApiError(404, "Title and description both are required!!!")
@@ -28,7 +23,6 @@ const publishAVideo = asyncHandler(async(req , res) => {
         const videoFileLocalPath =  req.files?.videoFile[0]?.path 
         const thumbnailLocalPath =  req.files?.thumbnail[0]?.path 
 
-        // console.log( await uploadFileOnCloudinary(videoFileLocalPath),  await uploadFileOnCloudinary(thumbnailLocalPath))
         const videoFile = await uploadFileOnCloudinary(videoFileLocalPath)
         const thumbnail = await uploadFileOnCloudinary(thumbnailLocalPath)
 

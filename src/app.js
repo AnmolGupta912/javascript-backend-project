@@ -17,9 +17,11 @@ app.use(cookieParser()) // acess user's server cookies and proform CURD operatio
 
 // routes import 
 import userRouter from "./routes/user.routes.js"
-
+import videoRouter from "./routes/video.route.js"
 
 // routes decleration
 app.use("/api/v1/user", userRouter)
+app.use("/api/v1/video", videoRouter)
+
 
 export { app , port }
