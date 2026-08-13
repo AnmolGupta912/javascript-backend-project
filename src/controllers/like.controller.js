@@ -23,7 +23,7 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
 
     const like = await Like.findOne({likedBy: userId, video: videoId}, async (err, like) => {
         if (err) {
-            throw new ApiError(500, "Error finding like")
+            throw new ApiError(500, "Error finding like!!!")
         }
         if (like) {
             // User has already liked the video, so remove the like
@@ -42,19 +42,54 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
 })
 
 const toggleCommentLike = asyncHandler(async (req, res) => {
-    const {commentId} = req.params
     //TODO: toggle like on comment
 
+    const {commentId} = req.params
+    const { userId } = req.userId    
+
+    const like = Like.findOne({likedBy: userId, comment: commentId})
+
+    if (like) {
+        // User has already liked the comment, so remove the like
+        await Like.deleteOne({likedBy: userId, comment: commentId})
+    } else {
+        // User has not liked the comment, so add the like
+        await Like.create({
+            comment: commentId,
+            likedBy: userId
+        })
+    }
+    
+    return res.status(200).json(new ApiResponse(200, like, "Successfully toggled comment like"))
 })
 
 const toggleTweetLike = asyncHandler(async (req, res) => {
     const {tweetId} = req.params
-    //TODO: toggle like on tweet
-}
-)
+    const { userId } = req.userId    
+
+    const tweet = Like.findOne({likedBy: userId, tweet: tweetId})
+
+    if (tweet) {
+        // User has already liked the tweet, so remove the like
+        await Like.deleteOne({likedBy: userId, tweet: tweetId})
+    } else {
+        // User has not liked the tweet, so add the like
+        await Like.create({
+            tweet: tweetId,
+            likedBy: userId
+        })
+    }
+
+    return res.status(200).json(new ApiResponse(200, tweet, "Successfully toggled tweet like"))
+})
 
 const getLikedVideos = asyncHandler(async (req, res) => {
     //TODO: get all liked videos
+    const { userId } = req.userId
+
+    const likedVideos = await Like.find({ likedBy: userId, video: { $exists: true } }).populate('video')
+
+    return res.status(200).json(new ApiResponse(200, likedVideos, "Successfully fetched liked videos"))
 })
 
 export {
