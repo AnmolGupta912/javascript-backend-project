@@ -8,10 +8,8 @@ import {asyncHandler} from "../utils/asyncHandler.js"
 
 const createTweet = asyncHandler(async (req, res) => {
     const userId = req.user?._id
-    console.log(userId)
     const {content} = req.body
 
-    console.log("Tweet content:", content)
     if (!content) {
         throw new ApiError(400, "Content is required")
     }
@@ -20,21 +18,6 @@ const createTweet = asyncHandler(async (req, res) => {
         content,
         owner: userId
     })
-
-    // tweet = await Tweet.aggregate([
-    //     {
-    //         $match: {
-    //             _id: tweet._id
-    //         }
-    //     },
-    //     {
-    //         $set: {
-    //         owner: userId
-    //     }
-    //     }
-    // ])
-
-    // await tweet.save({validateBeforeSave: false})
 
     if(!tweet){
         throw new ApiError(400, "Can't the tweet!!!")
@@ -46,14 +29,13 @@ const createTweet = asyncHandler(async (req, res) => {
 })
 
 const getUserTweets = asyncHandler(async (req, res) => {
-    // TODO: get user tweets
     const {userId} = req.params
 
     if(!isValidObjectId(userId)){
         throw new ApiError(400, "Invalid user id")
     }
 
-    const tweets = await Tweet.find({_id: userId})
+    const tweets = await Tweet.find({owner: userId})
 
     if(!tweets){
         throw new ApiError(404, "No tweets found for this user")
@@ -65,7 +47,6 @@ const getUserTweets = asyncHandler(async (req, res) => {
 })
 
 const updateTweet = asyncHandler(async (req, res) => {
-    //TODO: update tweet
     const {tweetId} = req.params
     const {content} = req.body
 
@@ -95,7 +76,6 @@ const updateTweet = asyncHandler(async (req, res) => {
 })
 
 const deleteTweet = asyncHandler(async (req, res) => {
-    //TODO: delete tweet
     const {tweetId} = req.params
 
     if(!isValidObjectId(tweetId)){
