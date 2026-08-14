@@ -21,6 +21,7 @@ const publishAVideo = asyncHandler(async(req , res) => {
 
     try {
         const {title, description} = req.body
+        const userId = req.user?._id
     
         if (!(title && description)) {
             throw new ApiError(404, "Title and description both are required!!!")
@@ -44,7 +45,8 @@ const publishAVideo = asyncHandler(async(req , res) => {
             thumbnail: thumbnail?.url,
             title,
             description,
-            duration: videoFile?.duration
+            duration: videoFile?.duration,
+            owner: userId
         })
 
         if (!video) {
