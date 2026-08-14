@@ -2,18 +2,39 @@ import mongoose, { isValidObjectId } from "mongoose"
 import {Tweet} from "../models/tweet.model.js"
 import {User} from "../models/user.model.js"
 import {ApiError} from "../utils/ApiError.js"
-import {ApiResponse} from "../utils/ApiResponse.js"
+import {ApiRespone} from "../utils/ApiRespone.js"
 import {asyncHandler} from "../utils/asyncHandler.js"
 
+
 const createTweet = asyncHandler(async (req, res) => {
-    //TODO: create tweet
-    const {userId} = req.userId
+    const userId = req.user?._id
+    console.log(userId)
     const {content} = req.body
 
-    const tweet = await Tweet.create({
-        owner: userId,
-        content
+    console.log("Tweet content:", content)
+    if (!content) {
+        throw new ApiError(400, "Content is required")
+    }
+
+    let tweet = await Tweet.create({
+        content,
+        owner: userId
     })
+
+    // tweet = await Tweet.aggregate([
+    //     {
+    //         $match: {
+    //             _id: tweet._id
+    //         }
+    //     },
+    //     {
+    //         $set: {
+    //         owner: userId
+    //     }
+    //     }
+    // ])
+
+    // await tweet.save({validateBeforeSave: false})
 
     if(!tweet){
         throw new ApiError(400, "Can't the tweet!!!")
@@ -21,7 +42,7 @@ const createTweet = asyncHandler(async (req, res) => {
 
     return res
     .status(200)
-    .json(new ApiResponse(200, tweet, "Scuccessfully created tweet!!!"))
+    .json(new ApiRespone(200, tweet, "Scuccessfully created tweet!!!"))
 })
 
 const getUserTweets = asyncHandler(async (req, res) => {
@@ -32,7 +53,7 @@ const getUserTweets = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Invalid user id")
     }
 
-    const tweets = await Tweet.find({owner: userId})
+    const tweets = await Tweet.find({_id: userId})
 
     if(!tweets){
         throw new ApiError(404, "No tweets found for this user")
@@ -40,7 +61,7 @@ const getUserTweets = asyncHandler(async (req, res) => {
 
     return res
     .status(200)
-    .json(new ApiResponse(200, tweets, "Successfully fetched user tweets"))
+    .json(new ApiRespone(200, tweets, "Successfully fetched user tweets"))
 })
 
 const updateTweet = asyncHandler(async (req, res) => {
@@ -70,7 +91,7 @@ const updateTweet = asyncHandler(async (req, res) => {
 
     return res
     .status(200)
-    .json(new ApiResponse(200, tweet, "Tweet updated successfully"))
+    .json(new ApiRespone(200, tweet, "Tweet updated successfully"))
 })
 
 const deleteTweet = asyncHandler(async (req, res) => {
@@ -89,7 +110,7 @@ const deleteTweet = asyncHandler(async (req, res) => {
 
     return res
     .status(200)
-    .json(new ApiResponse(200, null, "Tweet deleted successfully"))
+    .json(new ApiRespone(200, tweet, "Tweet deleted successfully"))
 })
 
 export {
