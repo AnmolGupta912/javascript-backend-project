@@ -15,7 +15,7 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
     // return the response with the updated like count
 
     const {videoId} = req.params
-    const {userId} = req.userId
+    const {userId} = req.user?._id
 
     if (!isValidObjectId(videoId)){
         throw new ApiError(400, "Cant get the videoId!!!")
@@ -45,7 +45,7 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
     //TODO: toggle like on comment
 
     const {commentId} = req.params
-    const { userId } = req.userId    
+    const { userId } = req.user?._id  
 
     const like = Like.findOne({likedBy: userId, comment: commentId})
 
@@ -65,7 +65,7 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
 
 const toggleTweetLike = asyncHandler(async (req, res) => {
     const {tweetId} = req.params
-    const { userId } = req.userId    
+    const { userId } = req.user?._id 
 
     const tweet = Like.findOne({likedBy: userId, tweet: tweetId})
 
@@ -85,7 +85,7 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
 
 const getLikedVideos = asyncHandler(async (req, res) => {
     //TODO: get all liked videos
-    const { userId } = req.userId
+    const { userId } = req.user?._id
 
     const likedVideos = await Like.find({ likedBy: userId, video: { $exists: true } }).populate('video')
 
