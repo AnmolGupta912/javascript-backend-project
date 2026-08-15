@@ -9,8 +9,44 @@ import { ApiRespone } from "../utils/ApiRespone.js"
 const getAllVideos = asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query
     //TODO: get all videos based on query, sort, pagination
-})
+    // why r userId sortBy sortType query here? userId is used to filter videos by owner, sortBy is used to sort videos by a specific field, sortType is used to specify the sort order (asc or desc), query is used to search for videos by title or description.
+    // how to implement this? we can use mongoose aggregate to implement this. we can use $match to filter videos by owner, $sort to sort videos by a specific field, $skip and $limit to implement pagination, $match to search for videos by title or description.
 
+    const videos = await Video.aggregate([
+        {
+            $match: {
+                isPublished: true
+            }
+        },
+        {
+            $match: {
+                title: { $regex: query, $options: "i" },
+                // search for videos by title how to implement this? we can use $match to search for videos by title or description. we can use $regex to search for videos by title or description. we can use $options to specify the search options. we can use "i" to specify case-insensitive search.
+                description: { $regex: query, $options: "i" }
+                 // search for videos by description
+            }
+        },
+        {
+            $match: {
+                owner: userId ? new mongoose.Types.ObjectId(userId) : { $exists: true }
+            }
+        },
+        {
+            $limit: parseInt(limit)*parseInt(page)
+        }
+    ])
+
+    if (!videos) {
+        throw new ApiError(400, "Can't get the videos!!!")
+    }
+
+    return res
+    .status(200)
+    .json(new ApiRespone(200, videos, "Videos fetched successfully!!!"))
+
+
+
+})
 
 const publishAVideo = asyncHandler(async(req , res) => {
     // get title and description from req.body
