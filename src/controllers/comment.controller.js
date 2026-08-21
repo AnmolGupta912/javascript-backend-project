@@ -9,10 +9,12 @@ const getVideoComments = asyncHandler(async (req, res) => {
     const {videoId} = req.params
     const {page = 1, limit = 10} = req.query
 
+    // if(!videoId)
+
     const comments = await Comment.aggregate([
         {
             $match: {
-                video: videoId
+                video: new mongoose.Types.ObjectId(videoId)
             }
         },
         {
@@ -24,6 +26,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
         throw new ApiError(400, "problem while fetching comments!!!")
     }
 
+    console.log("comment: ", comments)
     return res
     .status(200)
     .json(new ApiRespone(200, comments, "Successfully fetched the comments!!!"))
@@ -32,12 +35,14 @@ const getVideoComments = asyncHandler(async (req, res) => {
 
 const addComment = asyncHandler(async (req, res) => {
     // TODO: add a comment to a video
-    const {userId} = req.user?._id
+    const userId = req.user?._id
+    const {videoId} = req.params
     const {content} = req.body
 
     const comment = await Comment.create({
         owner: userId,
-        content
+        content,
+        video: videoId
     })
 
     if(!comment) {
@@ -55,7 +60,7 @@ const updateComment = asyncHandler(async (req, res) => {
     const {commentId} = req.params 
     const {content} = req.body
     
-    const comment = await Comment.findByIdAndUpdate(commentId, {content}, {new: true})
+    const comment = await Comment.findByIdAndUpdate(commentId, {content}, {returnDocument: 'after'})
 
     if(!comment) {
         throw new ApiError(400, "problem while updating comment!!!")
