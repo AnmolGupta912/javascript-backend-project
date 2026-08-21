@@ -21,6 +21,7 @@ export const verifyJWT = asyncHandler( async(req, res, next) => {
         if (!user) {
             throw new ApiError(405, "Invalid access token")
         }
+        //console.log("User from verifyJWT middleware:", user)
 
         req.user = user
         next()

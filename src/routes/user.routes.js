@@ -28,7 +28,7 @@ router.route("/change-password").patch(verifyJWT, changeCurrentPassword)
 
 router.route("/update-avatar").patch(verifyJWT, upload.single("avatar"), updateUserAvatar)
 router.route("/update-cover-image").patch(verifyJWT, upload.single("coverImage"), updateUserCoverImage)
-router.route("/c/:username").get(verifyJWT, getUserChannelProfile) // this is a get route
+router.route("/get-user-channel-profile/:username").get(verifyJWT, getUserChannelProfile) // this is a get route
 router.route("/watch-history").get(verifyJWT, getWatchHistory) // this is also a get route
 
 
